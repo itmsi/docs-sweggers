@@ -32,7 +32,7 @@ router.get('/', (req, res) => {
 // - SWAGGER_ENABLED=true (always enabled)
 // - SWAGGER_ENABLED=false (always disabled)
 // - SWAGGER_ENABLED=development (only in development mode)
-// - SWAGGER_ENABLED not set (defaults to development mode only)
+// - SWAGGER_ENABLED not set (defaults to true - always enabled for documentation app)
 
 const isSwaggerEnabled = () => {
   const swaggerEnabled = process?.env?.SWAGGER_ENABLED
@@ -41,8 +41,9 @@ const isSwaggerEnabled = () => {
   if (swaggerEnabled === 'false') return false
   if (swaggerEnabled === 'development') return process?.env?.NODE_ENV === 'development'
 
-  // Default behavior (backward compatibility)
-  return process?.env?.NODE_ENV === 'development'
+  // Default behavior: always enabled for documentation app
+  // Set SWAGGER_ENABLED=false to disable
+  return true
 }
 
 // Prometheus metrics endpoint
@@ -277,9 +278,53 @@ router.get('/docs/:slug', async (req, res, next) => {
   }
 })
 
-if (isSwaggerEnabled()) {
-  router.use('/documentation', swaggerUi.serve)
-  router.get('/documentation', swaggerUi.setup(index, { isExplorer: false }))
-}
+// Route untuk dokumentasi Swagger - selalu terdaftar
+router.use('/documentation', swaggerUi.serve)
+router.get('/documentation', (req, res, next) => {
+  if (isSwaggerEnabled()) {
+    return swaggerUi.setup(index, { isExplorer: false })(req, res, next)
+  } else {
+    return res.status(403).send(`
+      <html>
+        <head>
+          <title>Swagger Documentation Disabled</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              text-align: center;
+              padding: 50px;
+              background: #f5f5f5;
+            }
+            .error-container {
+              background: white;
+              padding: 40px;
+              border-radius: 8px;
+              max-width: 600px;
+              margin: 0 auto;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            h1 { color: #e74c3c; }
+            p { color: #666; line-height: 1.6; }
+            code {
+              background: #f4f4f4;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-family: monospace;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="error-container">
+            <h1>⚠️ Swagger Documentation Disabled</h1>
+            <p>Dokumentasi Swagger saat ini dinonaktifkan.</p>
+            <p>Untuk mengaktifkannya, set environment variable <code>SWAGGER_ENABLED=true</code> di file konfigurasi Anda.</p>
+            <p><small>Current NODE_ENV: <code>${process.env.NODE_ENV || 'not set'}</code><br>
+            SWAGGER_ENABLED: <code>${process.env.SWAGGER_ENABLED || 'not set'}</code></small></p>
+          </div>
+        </body>
+      </html>
+    `)
+  }
+})
 
 module.exports = router
