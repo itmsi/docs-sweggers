@@ -14,6 +14,10 @@ Example:
 - DELETE /api/examples/:id
 */
 
+// Services Module - untuk mengelola dokumentasi Swagger dari berbagai service
+const servicesModule = require('../../modules/services')
+routing.use(`${API_TAG}/services`, servicesModule)
+
 // Example Module (Template untuk module Anda)
 const exampleModule = require('../../modules/example')
 routing.use(`${API_TAG}/examples`, exampleModule)

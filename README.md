@@ -1,16 +1,19 @@
-# Express.js API Boilerplate
+# Swagger Documentation Hub
 
-Template lengkap untuk membangun REST API dengan Express.js yang sudah dilengkapi dengan berbagai fitur esensial untuk pengembangan aplikasi production-ready.
+Sistem dokumentasi terpusat untuk mengelola dan menampilkan dokumentasi Swagger/OpenAPI dari semua service yang ada. Sistem ini memungkinkan Anda untuk mengumpulkan, mengelola, dan menampilkan dokumentasi API dari berbagai service dalam satu tempat.
 
 ## 🚀 Fitur Utama
 
-- ✅ **Example Module Template**: Module contoh lengkap dengan CRUD, pagination, soft delete, validation
-- ✅ **Database**: PostgreSQL dengan Knex.js untuk query builder, migration, dan seeding
+- ✅ **Multi-Service Documentation**: Kelola dokumentasi Swagger dari berbagai service dalam satu sistem
+- ✅ **Swagger UI Integration**: Tampilkan dokumentasi Swagger dengan antarmuka yang user-friendly
+- ✅ **Service Management**: CRUD lengkap untuk mengelola service dan dokumentasi mereka
+- ✅ **Flexible Swagger Input**: Upload Swagger JSON langsung atau fetch dari URL
+- ✅ **Service Catalog**: Halaman utama yang menampilkan semua service dengan dokumentasi mereka
+- ✅ **Database**: PostgreSQL dengan Knex.js untuk menyimpan informasi service
 - ✅ **Authentication Ready**: JWT middleware dan utilities (tinggal implement)
 - ✅ **File Upload**: Integrasi dengan AWS S3 dan MinIO untuk object storage
 - ✅ **Email Service**: Template email dengan Nodemailer
 - ✅ **Message Queue**: RabbitMQ untuk async task processing
-- ✅ **API Documentation**: Swagger/OpenAPI 3.0 dengan contoh lengkap
 - ✅ **Security**: Rate limiting, CORS, input validation, XSS protection
 - ✅ **Monitoring**: Prometheus metrics dan comprehensive logging
 - ✅ **Internationalization**: Multi-language support dengan i18n
@@ -118,7 +121,9 @@ npm run dev
 
 Server akan berjalan di `http://localhost:3000`
 
-Akses dokumentasi API di `http://localhost:3000/documentation`
+Akses halaman utama dokumentasi di `http://localhost:3000/docs`
+
+Akses dokumentasi API sistem ini di `http://localhost:3000/documentation`
 
 ## 🏗️ Struktur Proyek
 
@@ -493,6 +498,150 @@ POST /api/examples/:id/restore
 ```
 
 > **📚 Full API Documentation:** `http://localhost:3000/documentation`
+
+## 📚 Mengelola Dokumentasi Swagger
+
+Sistem ini memungkinkan Anda untuk mengelola dokumentasi Swagger dari berbagai service. Setelah menjalankan migration, Anda dapat menambahkan service dan dokumentasi mereka.
+
+### Halaman Utama Dokumentasi
+
+Akses halaman utama untuk melihat semua service:
+```
+http://localhost:3000/docs
+```
+
+### API Endpoints untuk Services
+
+#### Get All Services
+```bash
+GET /api/services?page=1&limit=10&status=active&category=backend&search=user
+```
+
+#### Get Service by ID
+```bash
+GET /api/services/:id
+```
+
+#### Get Service by Slug
+```bash
+GET /api/services/slug/:slug
+```
+
+#### Get Swagger JSON
+```bash
+GET /api/services/:id/swagger
+# atau
+GET /api/services/slug/:slug/swagger
+```
+
+#### Create Service
+```bash
+POST /api/services
+Content-Type: application/json
+
+{
+  "name": "User Service",
+  "slug": "user-service",
+  "description": "Service untuk mengelola data user",
+  "version": "1.0.0",
+  "base_url": "https://api.example.com",
+  "swagger_url": "https://api.example.com/swagger.json",
+  "status": "active",
+  "category": "backend",
+  "tags": ["user", "authentication"]
+}
+```
+
+Atau dengan Swagger JSON langsung:
+```bash
+POST /api/services
+Content-Type: application/json
+
+{
+  "name": "User Service",
+  "slug": "user-service",
+  "description": "Service untuk mengelola data user",
+  "version": "1.0.0",
+  "swagger_json": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "User Service API",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/users": {
+        "get": {
+          "summary": "Get all users",
+          "responses": {
+            "200": {
+              "description": "Success"
+            }
+          }
+        }
+      }
+    }
+  },
+  "status": "active"
+}
+```
+
+#### Update Service
+```bash
+PUT /api/services/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Service Name",
+  "description": "Updated description"
+}
+```
+
+#### Update Swagger JSON
+```bash
+PUT /api/services/:id/swagger
+Content-Type: application/json
+
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Updated API",
+    "version": "2.0.0"
+  },
+  "paths": {}
+}
+```
+
+#### Delete Service
+```bash
+DELETE /api/services/:id
+```
+
+#### Restore Service
+```bash
+POST /api/services/:id/restore
+```
+
+### Menampilkan Dokumentasi Swagger
+
+Setelah service ditambahkan, dokumentasi dapat diakses melalui:
+```
+http://localhost:3000/docs/:slug
+```
+
+Contoh:
+```
+http://localhost:3000/docs/user-service
+```
+
+### Cara Kerja
+
+1. **Swagger URL**: Jika Anda menyediakan `swagger_url`, sistem akan otomatis fetch dan menyimpan Swagger JSON dari URL tersebut saat create/update.
+
+2. **Swagger JSON Langsung**: Anda juga dapat langsung mengirim Swagger JSON melalui field `swagger_json`.
+
+3. **Validasi**: Sistem akan memvalidasi bahwa Swagger JSON yang diberikan adalah valid (memiliki `openapi` atau `swagger` version).
+
+4. **Slug Generation**: Jika slug tidak disediakan, sistem akan otomatis generate dari nama service.
 
 ## 🔐 Authentication (Ready to Implement)
 
