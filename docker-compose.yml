@@ -2,12 +2,10 @@ version: '3.8'
 
 services:
   api:
-    container_name: core-api-msi-server
+    container_name: docs-swagger-api
     build:
       context: .
       dockerfile: docker/Dockerfile
-    ports:
-      - "9509:9501"
     env_file:
       - .env
     restart: unless-stopped
@@ -15,9 +13,22 @@ services:
       - ./logs:/app/logs
     environment:
       - NODE_ENV=production
-      - PORT=9501
+      - APP_PORT=9602
+    networks:
+      - traefik-network
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      
+      # Router untuk API (port 9602) - HTTP (Cloudflare handle HTTPS)
+      - "traefik.http.routers.docs-swagger-api.rule=Host(`docs.motorsights.com`)"
+      - "traefik.http.routers.docs-swagger-api.entrypoints=web"
+      - "traefik.http.routers.docs-swagger-api.service=docs-swagger-api"
+      - "traefik.http.services.docs-swagger-api.loadbalancer.server.port=9602"
+      
+      - "com.centurylinklabs.watchtower.enable=false"
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9501/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9602/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -27,7 +38,11 @@ services:
         limits:
           memory: 1G
           cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
 
 networks:
-  default:
-    driver: bridge 
+  traefik-network:
+    external: true
+    name: traefik-network 
