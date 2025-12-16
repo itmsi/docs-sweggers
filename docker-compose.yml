@@ -13,7 +13,7 @@ services:
       - NODE_ENV=production
       - APP_PORT=9602
     networks:
-      - traefik-network
+      - infra_net
       - internal
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:9602/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
@@ -37,23 +37,14 @@ services:
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+    ports:
+      - "80:80"
     networks:
-      - traefik-network
+      - infra_net
       - internal
     depends_on:
       api:
         condition: service_healthy
-    labels:
-      # Enable Traefik
-      - "traefik.enable=true"
-      
-      # Router untuk Nginx (port 80) - HTTP (Cloudflare handle HTTPS)
-      - "traefik.http.routers.docs-swagger-api.rule=Host(`docs.motorsights.com`)"
-      - "traefik.http.routers.docs-swagger-api.entrypoints=web"
-      - "traefik.http.routers.docs-swagger-api.service=docs-swagger-nginx"
-      - "traefik.http.services.docs-swagger-nginx.loadbalancer.server.port=80"
-      
-      - "com.centurylinklabs.watchtower.enable=false"
     healthcheck:
       test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost/health || exit 1"]
       interval: 30s
@@ -70,8 +61,8 @@ services:
           cpus: '0.1'
 
 networks:
-  traefik-network:
+  infra_net:
     external: true
-    name: traefik-network
+    name: infra_net
   internal:
     driver: bridge 
